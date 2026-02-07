@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>NotewareLM</title>
+
+<!-- Tailwind -->
+<script src="https://cdn.tailwindcss.com"></script>
+
+<!-- Vue -->
+<script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+
+<!-- Lucide -->
+<script src="https://unpkg.com/lucide@latest"></script>
+
+<style>
+body {
+  background: #e5e5e5;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+</style>
+</head>
+
+<body class="flex items-center justify-center min-h-screen">
+
+<div id="app" class="w-[390px] h-[820px] bg-white rounded-[40px] shadow-2xl relative overflow-hidden">
+
+<!-- Status Bar -->
+<div class="flex items-center justify-between px-6 pt-4 text-sm font-medium">
+  <span>7:20</span>
+  <div class="w-28 h-6 bg-black rounded-full"></div>
+  <div class="flex items-center gap-1">
+    <i data-lucide="wifi" class="w-4 h-4"></i>
+    <i data-lucide="battery" class="w-5 h-5"></i>
+  </div>
+</div>
+
+<!-- Header -->
+<div class="px-6 mt-4">
+  <h1 class="text-xl font-bold">NotewareLM</h1>
+</div>
+
+<!-- Search -->
+<div class="px-6 mt-4">
+  <div class="flex items-center bg-gray-100 rounded-2xl px-4 py-3 gap-3">
+    <i data-lucide="search" class="w-5 h-5 text-gray-500"></i>
+    <input
+      type="text"
+      placeholder="Search notes..."
+      class="bg-transparent outline-none flex-1 text-gray-600 placeholder-gray-400"
+    />
+    <i data-lucide="sliders-horizontal" class="w-5 h-5 text-gray-600"></i>
+  </div>
+</div>
+
+<!-- Active -->
+<div class="px-6 mt-6">
+  <h2 class="font-semibold text-gray-800 mb-3">Active</h2>
+  <div class="flex gap-4 overflow-x-auto pb-2">
+    <div v-for="(user,i) in activeUsers" :key="i" class="flex-shrink-0">
+      <div class="w-14 h-14 rounded-full p-[2px] bg-gray-300">
+        <img :src="user.avatar" class="w-full h-full rounded-full object-cover">
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Home Section -->
+<div class="px-6 mt-4 overflow-y-auto h-[470px]">
+  <h2 class="font-semibold text-gray-800 mb-2">Home</h2>
+
+  <div v-for="(chat,i) in chats" :key="i"
+       class="flex items-center gap-4 py-4 border-b border-gray-100">
+
+    <div class="w-14 h-14 rounded-full p-[2px] bg-gray-300">
+      <img :src="chat.avatar" class="w-full h-full rounded-full object-cover">
+    </div>
+
+    <div class="flex-1">
+      <div class="flex items-center justify-between">
+        <h3 class="font-semibold text-gray-900">{{ chat.name }}</h3>
+        <span class="text-sm text-gray-500">{{ chat.time }}</span>
+      </div>
+      <p class="text-sm text-gray-500 truncate">{{ chat.message }}</p>
+    </div>
+  </div>
+</div>
+
+<!-- Bottom Navigation -->
+<div class="absolute bottom-4 left-1/2 -translate-x-1/2 w-[90%] bg-gray-100 rounded-3xl py-3 px-6 flex justify-between items-center shadow-inner">
+
+  <!-- Home -->
+  <div class="flex flex-col items-center text-black">
+    <i data-lucide="home" class="w-6 h-6"></i>
+    <span class="text-xs mt-1 font-medium">Home</span>
+  </div>
+
+  <!-- To-do -->
+  <div class="flex flex-col items-center text-gray-500">
+    <i data-lucide="list-todo" class="w-6 h-6"></i>
+    <span class="text-xs mt-1">To-do</span>
+  </div>
+
+  <!-- Search -->
+  <div class="flex flex-col items-center text-gray-500">
+    <i data-lucide="search" class="w-6 h-6"></i>
+    <span class="text-xs mt-1">Search</span>
+  </div>
+
+  <!-- Settings -->
+  <div class="flex flex-col items-center text-gray-500">
+    <i data-lucide="settings" class="w-6 h-6"></i>
+    <span class="text-xs mt-1">Settings</span>
+  </div>
+
+</div>
+
+<!-- Home Indicator -->
+<div class="absolute bottom-1 left-1/2 -translate-x-1/2 w-32 h-1.5 bg-black rounded-full"></div>
+
+</div>
+
+<script>
+const { createApp, nextTick } = Vue;
+
+createApp({
+  data() {
+    return {
+      activeUsers: [
+        { avatar: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSCEara7G48B9wBtepw0qgCmiO5tAJ-Wi8BkQY5MyGD-Q&s=10" },
+        { avatar: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ4f9RoG_fkyBxyk781W8TntGFLLoV1_cMZwAkHn7dpbA&s=10" },
+        { avatar: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQUzo1zAHd99e2JRtJZASAfSj6Qb8NCgG1Y6QKLm01WQQ&s=10" },
+        { avatar: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQuaN0PlI1IkISNfGrHEfMjtXQzjcvVtLHIyPKi2uCUkA&s=10" },
+        { avatar: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRtrjiqv4JT8YP1NWXZkMEM1j5xmXCQ31ex6m5EFkYdMA&s=10" },
+        { avatar: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSpehW36y2RYXr_L5BFQDA4GBYjpdmAdwlP33-1nmLfOA&s=10" }
+      ],
+
+      chats: [
+        {
+          name: "Quick Notes",
+          message: "Tap to open your recent notes",
+          time: "Now",
+          avatar: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQuaN0PlI1IkISNfGrHEfMjtXQzjcvVtLHIyPKi2uCUkA&s=10"
+        },
+        {
+          name: "Ideas",
+          message: "Brainstorm project ideas",
+          time: "2h",
+          avatar: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ4f9RoG_fkyBxyk781W8TntGFLLoV1_cMZwAkHn7dpbA&s=10"
+        },
+        {
+          name: "Work Tasks",
+          message: "Complete UI design",
+          time: "5h",
+          avatar: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQUzo1zAHd99e2JRtJZASAfSj6Qb8NCgG1Y6QKLm01WQQ&s=10"
+        },
+        {
+          name: "Personal",
+          message: "Shopping list & reminders",
+          time: "1d",
+          avatar: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSCEara7G48B9wBtepw0qgCmiO5tAJ-Wi8BkQY5MyGD-Q&s=10"
+        }
+      ]
+    }
+  },
+
+  mounted() {
+    nextTick(() => {
+      lucide.createIcons();
+    });
+  }
+}).mount("#app");
+</script>
+
+</body>
+  </html>
