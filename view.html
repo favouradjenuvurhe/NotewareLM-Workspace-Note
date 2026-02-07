@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>View Note</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+body{margin:0;font-family:Arial;background:#0f0f0f;color:#fff;padding:20px;}
+#deleteBtn{background:red;border:none;padding:10px;color:white;border-radius:6px;margin-top:20px;cursor:pointer;}
+#viewContent p{margin:8px 0;}
+</style>
+</head>
+<body>
+<h2 id="viewTitle"></h2>
+<div id="viewContent"></div>
+<button id="deleteBtn">Delete Note</button>
+
+<script>
+let notes=JSON.parse(localStorage.getItem("notes")||"[]");
+let activeId=localStorage.getItem("activeNote");
+let note=notes.find(n=>n.id==activeId);
+
+if(note){
+  document.getElementById("viewTitle").innerText=note.title;
+  document.getElementById("viewContent").innerHTML=note.content.map(p=>`<p>${p}</p>`).join("");
+} else {
+  document.getElementById("viewTitle").innerText="Note not found";
+}
+
+document.getElementById("deleteBtn").onclick=()=>{
+  notes=notes.filter(n=>n.id!=activeId);
+  localStorage.setItem("notes",JSON.stringify(notes));
+  window.location.href="dashboard.html";
+}
+</script>
+
+</body>
+</html>
