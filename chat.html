@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>NotewareLM Chat</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+body{margin:0;font-family:Arial;background:#0f0f0f;color:#fff;display:flex;flex-direction:column;height:100vh;}
+#messages{flex:1;padding:15px;overflow-y:auto;}
+.msg{margin-bottom:10px;max-width:80%;}
+.system{background:#222;padding:10px;border-radius:8px;}
+.user{background:#7c3aed;padding:10px;border-radius:8px;align-self:flex-end;}
+#chatInput{display:flex;padding:10px;background:#111;}
+#chatInput input{flex:1;padding:10px;border:none;border-radius:6px;}
+#chatInput button{margin-left:8px;padding:10px;border:none;background:#7c3aed;color:white;border-radius:6px;}
+</style>
+</head>
+<body>
+
+<div id="messages"></div>
+<div id="chatInput">
+  <input type="text" id="input" placeholder="Type here...">
+  <button onclick="send()">Send</button>
+</div>
+
+<script>
+let notes = JSON.parse(localStorage.getItem("notes") || "[]");
+let activeNote = null;
+let state = "idle";
+
+function addSystem(text){ const div=document.createElement("div"); div.className="msg system"; div.innerText=text; messages.appendChild(div); messages.scrollTop=messages.scrollHeight; }
+function addUser(text){ const div=document.createElement("div"); div.className="msg user"; div.innerText=text; messages.appendChild(div); messages.scrollTop=messages.scrollHeight; }
+
+window.onload=()=>{ addSystem("Create new note OR type Continue with note title"); }
+
+function send(){
+  const input=document.getElementById("input");
+  const text=input.value.trim();
+  if(!text) return;
+  input.value="";
+  addUser(text);
+
+  if(state==="idle"){
+    if(text.toLowerCase().includes("create")){
+      state="title";
+      addSystem("Title please");
+    } else if(text.toLowerCase().includes("continue")){
+      state="continue";
+      addSystem("Send note title");
+    } else {
+      addSystem("Invalid command. Type 'Create' or 'Continue'");
+    }
+  }
+  else if(state==="title"){
+    activeNote={id:Date.now(), title:text, content:[], created:new Date().toLocaleString()};
+    state="writing";
+    addSystem("Start writing your note");
+  }
+  else if(state==="writing"){
+    activeNote.content.push(text);
+  }
+  else if(state==="continue"){
+    activeNote=notes.find(n=>n.title===text);
+    if(activeNote){
+      state="writing";
+      addSystem("Continue writing");
+    } else {
+      addSystem("Note not found. Try creating new note.");
+      state="idle";
+    }
+  }
+}
+
+/* Save note on leaving chat */
+window.onbeforeunload=()=>{
+  if(activeNote && !notes.find(n=>n.id===activeNote.id)){
+    notes.push(activeNote);
+    localStorage.setItem("notes", JSON.stringify(notes));
+  }
+}
+</script>
+
+</body>
+</html>
