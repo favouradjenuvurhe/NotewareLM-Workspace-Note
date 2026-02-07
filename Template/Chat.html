@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Chat Notepad</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+
+<style>
+body {
+  background: #e5e5e5;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+</style>
+</head>
+
+<body class="flex items-center justify-center min-h-screen">
+
+<div id="app"
+class="w-[390px] h-[820px] bg-white rounded-[40px] shadow-2xl relative overflow-hidden flex flex-col">
+
+<!-- Status Bar -->
+<div class="flex items-center justify-between px-6 pt-4 text-sm font-medium">
+  <span>7:20</span>
+  <div class="w-28 h-6 bg-black rounded-full"></div>
+  <div class="flex items-center gap-1">
+    <i data-lucide="wifi" class="w-4 h-4"></i>
+    <i data-lucide="battery" class="w-5 h-5"></i>
+  </div>
+</div>
+
+<!-- Header -->
+<div class="px-6 mt-4 flex items-center gap-3">
+  <button class="w-11 h-11 rounded-full bg-gray-100 flex items-center justify-center">
+    <i data-lucide="chevron-left" class="w-5 h-5"></i>
+  </button>
+
+  <div class="flex-1">
+    <h2 class="font-semibold text-gray-900">Title: ECO201 - Revision</h2>
+    <p class="text-sm text-gray-500">Revision Note</p>
+  </div>
+
+  <button class="w-11 h-11 rounded-full bg-gray-100 flex items-center justify-center">
+    <i data-lucide="bookmark" class="w-5 h-5"></i>
+  </button>
+</div>
+
+<!-- Messages / Notes -->
+<div ref="chatBox"
+class="flex-1 overflow-y-auto px-6 mt-4 space-y-3">
+
+  <div v-for="note in filteredNotes"
+       :key="note.id"
+       class="flex"
+       :class="note.type === 'out' ? 'justify-end' : 'justify-start'">
+
+    <div class="max-w-[260px]">
+
+      <div
+        class="px-4 py-3 rounded-2xl text-sm"
+        :class="note.type === 'out'
+          ? 'bg-black text-white'
+          : 'bg-gray-100 text-gray-900'">
+
+        {{ note.text }}
+      </div>
+
+      <div class="text-xs text-gray-400 mt-1 flex items-center gap-1"
+           :class="note.type === 'out'
+             ? 'justify-end'
+             : 'justify-start'">
+
+        {{ note.time }}
+
+        <i v-if="note.type==='out'"
+           data-lucide="check-check"
+           class="w-4 h-4"></i>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<!-- Input -->
+<div class="px-4 pb-6">
+  <div class="bg-gray-100 rounded-3xl flex items-center px-3 py-2">
+
+    <button class="w-10 h-10 rounded-full bg-white flex items-center justify-center">
+      <i data-lucide="plus" class="w-5 h-5"></i>
+    </button>
+
+    <input
+      v-model="newNote"
+      @keyup.enter="sendNote"
+      placeholder="Write a note..."
+      class="flex-1 px-3 outline-none bg-transparent text-sm"
+    />
+
+    <button
+      @click="sendNote"
+      class="w-10 h-10 rounded-full bg-black flex items-center justify-center text-white">
+
+      <i data-lucide="send" class="w-5 h-5"></i>
+    </button>
+
+  </div>
+</div>
+
+<!-- Home Indicator -->
+<div class="absolute bottom-1 left-1/2 -translate-x-1/2
+w-32 h-1.5 bg-black rounded-full"></div>
+
+</div>
+
+<script>
+const { createApp, nextTick } = Vue;
+
+createApp({
+  data() {
+    return {
+      search: "",
+      newNote: "",
+      notes: [
+        { id: 1, text: "Hi, I'm NotewareLM", type: "in", time: "Now" },
+        { id: 2, text: "You can write quick notes here.", type: "out", time: "Now" }
+      ]
+    }
+  },
+
+  computed: {
+    filteredNotes() {
+      if (!this.search) return this.notes;
+      return this.notes.filter(n =>
+        n.text.toLowerCase().includes(this.search.toLowerCase())
+      );
+    }
+  },
+
+  methods: {
+    sendNote() {
+      if (!this.newNote.trim()) return;
+
+      const time = new Date().toLocaleTimeString([], {
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+
+      this.notes.push({
+        id: Date.now(),
+        text: this.newNote,
+        type: "out",
+        time
+      });
+
+      this.newNote = "";
+
+      this.$nextTick(() => {
+        this.$refs.chatBox.scrollTop =
+          this.$refs.chatBox.scrollHeight;
+        lucide.createIcons();
+      });
+    }
+  },
+
+  mounted() {
+    nextTick(() => lucide.createIcons());
+  }
+}).mount("#app");
+</script>
+
+</body>
+  </html>
