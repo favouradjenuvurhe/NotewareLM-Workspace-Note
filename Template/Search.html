@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>NotewareLM — Search</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+
+<style>
+body {
+  background:#e5e5e5;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+}
+</style>
+</head>
+
+<body class="flex items-center justify-center min-h-screen">
+
+<div id="app"
+class="w-[390px] h-[820px] bg-white rounded-[40px] shadow-2xl relative overflow-hidden flex flex-col">
+
+<!-- Status Bar -->
+<div class="flex items-center justify-between px-6 pt-4 text-sm font-medium">
+  <span>7:20</span>
+  <div class="w-28 h-6 bg-black rounded-full"></div>
+  <div class="flex items-center gap-1">
+    <i data-lucide="wifi" class="w-4 h-4"></i>
+    <i data-lucide="battery" class="w-5 h-5"></i>
+  </div>
+</div>
+
+<!-- Header -->
+<div class="px-6 mt-4">
+  <h1 class="text-xl font-bold">Search</h1>
+</div>
+
+<!-- Search Bar -->
+<div class="px-6 mt-4">
+  <div class="flex items-center bg-gray-100 rounded-2xl px-4 py-3 gap-3">
+    <i data-lucide="search" class="w-5 h-5 text-gray-500"></i>
+    <input
+      v-model="query"
+      placeholder="Search notes & tasks..."
+      class="bg-transparent outline-none flex-1 text-gray-700"
+    />
+    <button v-if="query" @click="query=''">
+      <i data-lucide="x" class="w-5 h-5 text-gray-500"></i>
+    </button>
+  </div>
+</div>
+
+<!-- Results -->
+<div class="flex-1 overflow-y-auto px-6 mt-4">
+
+  <p v-if="query && filtered.length===0"
+     class="text-center text-gray-400 mt-10">
+     No results found
+  </p>
+
+  <div v-for="item in filtered"
+       :key="item.id"
+       class="bg-gray-50 p-4 rounded-2xl mb-3">
+
+    <div class="flex items-center justify-between">
+      <h3 class="font-semibold text-gray-900">
+        {{ item.title }}
+      </h3>
+      <span class="text-xs text-gray-500">
+        {{ item.type }}
+      </span>
+    </div>
+
+    <p class="text-sm text-gray-600 mt-1">
+      {{ item.text }}
+    </p>
+
+  </div>
+
+</div>
+
+<!-- Bottom Navigation -->
+<div class="absolute bottom-6 left-1/2 -translate-x-1/2
+w-[90%] bg-gray-100 rounded-3xl py-3 px-6 flex justify-between shadow-inner">
+
+  <div class="flex flex-col items-center text-gray-500">
+    <i data-lucide="home" class="w-6 h-6"></i>
+    <span class="text-xs mt-1">Home</span>
+  </div>
+
+  <div class="flex flex-col items-center text-gray-500">
+    <i data-lucide="list-todo" class="w-6 h-6"></i>
+    <span class="text-xs mt-1">To-do</span>
+  </div>
+
+  <div class="flex flex-col items-center text-black">
+    <i data-lucide="search" class="w-6 h-6"></i>
+    <span class="text-xs mt-1 font-medium">Search</span>
+  </div>
+
+  <div class="flex flex-col items-center text-gray-500">
+    <i data-lucide="settings" class="w-6 h-6"></i>
+    <span class="text-xs mt-1">Settings</span>
+  </div>
+
+</div>
+
+<!-- Home Indicator -->
+<div class="absolute bottom-1 left-1/2 -translate-x-1/2
+w-32 h-1.5 bg-black rounded-full"></div>
+
+</div>
+
+<script>
+const { createApp, nextTick } = Vue;
+
+createApp({
+  data() {
+    return {
+      query: "",
+      items: [
+        { id:1, title:"Quick Notes", text:"Meeting ideas and drafts", type:"Note" },
+        { id:2, title:"Work Tasks", text:"Finish UI redesign", type:"Task" },
+        { id:3, title:"Shopping List", text:"Milk, Bread, Eggs", type:"Note" },
+        { id:4, title:"Study", text:"Revise ECO201 chapters", type:"Task" }
+      ]
+    }
+  },
+
+  computed: {
+    filtered() {
+      if(!this.query) return this.items;
+      return this.items.filter(i =>
+        (i.title + i.text)
+        .toLowerCase()
+        .includes(this.query.toLowerCase())
+      );
+    }
+  },
+
+  mounted() {
+    nextTick(()=>lucide.createIcons());
+  }
+}).mount("#app");
+</script>
+
+</body>
+</html>
