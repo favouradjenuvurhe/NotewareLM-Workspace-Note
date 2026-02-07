@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>NotewareLM — To-Do</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+
+<style>
+body {
+  background:#e5e5e5;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+}
+</style>
+</head>
+
+<body class="flex items-center justify-center min-h-screen">
+
+<div id="app"
+class="w-[390px] h-[820px] bg-white rounded-[40px] shadow-2xl relative overflow-hidden flex flex-col">
+
+<!-- Status Bar -->
+<div class="flex items-center justify-between px-6 pt-4 text-sm font-medium">
+  <span>7:20</span>
+  <div class="w-28 h-6 bg-black rounded-full"></div>
+  <div class="flex items-center gap-1">
+    <i data-lucide="wifi" class="w-4 h-4"></i>
+    <i data-lucide="battery" class="w-5 h-5"></i>
+  </div>
+</div>
+
+<!-- Header -->
+<div class="px-6 mt-4 flex items-center gap-3">
+  <button class="w-11 h-11 rounded-full bg-gray-100 flex items-center justify-center">
+    <i data-lucide="chevron-left" class="w-5 h-5"></i>
+  </button>
+
+  <div class="flex-1">
+    <h2 class="font-semibold text-gray-900">To-Do List</h2>
+    <p class="text-sm text-gray-500">{{ remaining }} tasks left</p>
+  </div>
+
+  <button @click="clearDone"
+  class="w-11 h-11 rounded-full bg-gray-100 flex items-center justify-center">
+    <i data-lucide="trash-2" class="w-5 h-5"></i>
+  </button>
+</div>
+
+<!-- Search -->
+<div class="px-6 mt-4">
+  <div class="flex items-center bg-gray-100 rounded-2xl px-4 py-3 gap-3">
+    <i data-lucide="search" class="w-5 h-5 text-gray-500"></i>
+    <input v-model="search"
+      placeholder="Search tasks..."
+      class="bg-transparent outline-none flex-1 text-gray-600"/>
+  </div>
+</div>
+
+<!-- Task List -->
+<div class="flex-1 overflow-y-auto px-6 mt-4 space-y-3">
+
+  <div v-for="task in filteredTasks"
+       :key="task.id"
+       class="flex items-center gap-4 bg-gray-50 p-4 rounded-2xl">
+
+    <!-- Checkbox -->
+    <button @click="toggle(task)"
+    class="w-6 h-6 rounded-full border-2 flex items-center justify-center"
+    :class="task.done ? 'bg-black border-black text-white' : 'border-gray-300'">
+
+      <i v-if="task.done"
+         data-lucide="check"
+         class="w-4 h-4"></i>
+    </button>
+
+    <!-- Task Text -->
+    <p class="flex-1 text-sm"
+       :class="task.done ? 'line-through text-gray-400' : 'text-gray-900'">
+       {{ task.text }}
+    </p>
+
+    <!-- Delete -->
+    <button @click="remove(task.id)">
+      <i data-lucide="x" class="w-5 h-5 text-gray-400"></i>
+    </button>
+
+  </div>
+
+</div>
+
+<!-- Add Task -->
+<div class="px-4 pb-6">
+  <div class="bg-gray-100 rounded-3xl flex items-center px-3 py-2">
+
+    <input v-model="newTask"
+      @keyup.enter="addTask"
+      placeholder="Add new task..."
+      class="flex-1 px-3 outline-none bg-transparent text-sm"/>
+
+    <button @click="addTask"
+    class="w-10 h-10 rounded-full bg-black flex items-center justify-center text-white">
+      <i data-lucide="plus" class="w-5 h-5"></i>
+    </button>
+
+  </div>
+</div>
+
+<!-- Bottom Navigation -->
+<div class="absolute bottom-6 left-1/2 -translate-x-1/2 w-[90%]
+bg-gray-100 rounded-3xl py-3 px-6 flex justify-between shadow-inner">
+
+  <div class="flex flex-col items-center text-gray-500">
+    <i data-lucide="home" class="w-6 h-6"></i>
+    <span class="text-xs mt-1">Home</span>
+  </div>
+
+  <div class="flex flex-col items-center text-black">
+    <i data-lucide="list-todo" class="w-6 h-6"></i>
+    <span class="text-xs mt-1 font-medium">To-Do</span>
+  </div>
+
+  <div class="flex flex-col items-center text-gray-500">
+    <i data-lucide="search" class="w-6 h-6"></i>
+    <span class="text-xs mt-1">Search</span>
+  </div>
+
+  <div class="flex flex-col items-center text-gray-500">
+    <i data-lucide="settings" class="w-6 h-6"></i>
+    <span class="text-xs mt-1">Settings</span>
+  </div>
+
+</div>
+
+<!-- Home Indicator -->
+<div class="absolute bottom-1 left-1/2 -translate-x-1/2
+w-32 h-1.5 bg-black rounded-full"></div>
+
+</div>
+
+<script>
+const { createApp, nextTick } = Vue;
+
+createApp({
+  data() {
+    return {
+      search: "",
+      newTask: "",
+      tasks: [
+        { id:1, text:"Finish ECO201 revision", done:false },
+        { id:2, text:"Review lecture notes", done:true },
+        { id:3, text:"Practice past questions", done:false }
+      ]
+    }
+  },
+
+  computed: {
+    filteredTasks() {
+      if(!this.search) return this.tasks;
+      return this.tasks.filter(t =>
+        t.text.toLowerCase().includes(this.search.toLowerCase()));
+    },
+    remaining() {
+      return this.tasks.filter(t=>!t.done).length;
+    }
+  },
+
+  methods: {
+    addTask() {
+      if(!this.newTask.trim()) return;
+      this.tasks.push({
+        id:Date.now(),
+        text:this.newTask,
+        done:false
+      });
+      this.newTask="";
+      this.refreshIcons();
+    },
+
+    toggle(task) {
+      task.done=!task.done;
+      this.refreshIcons();
+    },
+
+    remove(id) {
+      this.tasks=this.tasks.filter(t=>t.id!==id);
+    },
+
+    clearDone() {
+      this.tasks=this.tasks.filter(t=>!t.done);
+    },
+
+    refreshIcons() {
+      this.$nextTick(()=>lucide.createIcons());
+    }
+  },
+
+  mounted() {
+    nextTick(()=>lucide.createIcons());
+  }
+}).mount("#app");
+</script>
+
+</body>
+  </html>
