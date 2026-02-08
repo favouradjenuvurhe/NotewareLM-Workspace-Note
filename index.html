@@ -196,7 +196,7 @@ createApp({
 
     shortText(text) {
       if (!text) return "";
-      return text.length > 45 ? text.slice(0, 45) : text;
+      return text.length > 25 ? text.slice(0, 25) : text;
     },
 
     formatTime(ts) {
