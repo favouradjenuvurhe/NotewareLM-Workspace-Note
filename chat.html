@@ -4,6 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Chat Notepad</title>
+
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
 <script src="https://unpkg.com/lucide@latest"></script>
@@ -13,6 +14,19 @@ body {
   background: #e5e5e5;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
+
+/* App animations */
+.fade-enter-active,
+.fade-leave-active {
+  transition: all 0.25s ease;
+}
+.fade-enter-from {
+  opacity: 0;
+  transform: translateY(8px);
+}
+.fade-leave-to {
+  opacity: 0;
+}
 </style>
 </head>
 
@@ -20,24 +34,34 @@ body {
 
 <div id="app" class="w-full min-h-screen bg-white flex flex-col">
 
-<!-- Header -->
+<!-- HEADER -->
 <div class="px-6 mt-4 flex items-center gap-3">
-  <button onclick="history.back()" class="w-11 h-11 rounded-full bg-gray-100 flex items-center justify-center">
-    <i data-lucide="chevron-left" class="w-5 h-5"></i>
-  </button>
 
-  <div class="flex-1">
-    <h2 class="font-semibold text-gray-900">
-      {{ activeNote?.title || "[ No Note Selected ]" }}
-    </h2>
-    <p class="text-sm text-gray-500">
-      {{ activeNote ? activeNote.created : "Chat Notepad" }}
-    </p>
-  </div>
+<button onclick="history.back()" class="w-11 h-11 rounded-full bg-gray-100 flex items-center justify-center">
+<i data-lucide="chevron-left" class="w-5 h-5"></i>
+</button>
+
+<div class="flex-1">
+<h2 class="font-semibold text-gray-900">
+Title: {{ activeNote?.title || "[ Title Not Created ]" }}
+</h2>
+
+<p class="text-sm text-gray-500">
+Revision Note
+</p>
 </div>
 
-<!-- Welcome Screen -->
-<div v-if="messages.length === 0"
+<button @click="toggleBookmark"
+class="w-11 h-11 rounded-full bg-gray-100 flex items-center justify-center">
+
+<i :data-lucide="activeNote?.features ? 'bookmark-check' : 'bookmark'" class="w-5 h-5"></i>
+
+</button>
+
+</div>
+
+<!-- WELCOME -->
+<div v-if="chat.length === 0"
 class="flex flex-col items-center justify-center flex-1 text-center text-gray-500">
 
 <div class="w-20 h-20 rounded-full bg-gray-100 flex items-center justify-center mb-4">
@@ -45,35 +69,45 @@ class="flex flex-col items-center justify-center flex-1 text-center text-gray-50
 </div>
 
 <p class="font-semibold">Start chatting with LU_LU</p>
-<p class="text-sm">Type <b>Create</b> or <b>Continue</b></p>
+<p class="text-sm">Type anything to begin</p>
 
 </div>
 
-<!-- Messages -->
-<div v-else ref="chatBox"
-class="flex-1 overflow-y-auto px-6 mt-4 space-y-3">
+<!-- CHAT -->
+<div v-else ref="chatBox" class="flex-1 overflow-y-auto px-6 mt-4 space-y-3">
 
-<div v-for="m in messages" :key="m.id"
+<transition-group name="fade">
+
+<div v-for="msg in chat" :key="msg.id"
 class="flex"
-:class="m.type==='user'?'justify-end':'justify-start'">
+:class="msg.type==='out'?'justify-end':'justify-start'">
 
 <div class="max-w-[260px]">
 
-<div class="px-4 py-3 rounded-2xl text-sm"
-:class="m.type==='user'?'bg-black text-white':'bg-gray-100 text-gray-900'">
-{{ m.text }}
-</div>
+<div class="px-4 py-3 rounded-2xl text-sm whitespace-pre-line"
+:class="msg.type==='out'?'bg-black text-white':'bg-gray-100 text-gray-900'">
 
-<div class="text-xs text-gray-400 mt-1">
-{{ m.time }}
-</div>
+{{ msg.text }}
 
 </div>
+
+<div class="text-xs text-gray-400 mt-1"
+:class="msg.type==='out'?'text-right':'text-left'">
+
+{{ msg.time }}
+
+</div>
+
 </div>
 </div>
 
-<!-- Input -->
+</transition-group>
+
+</div>
+
+<!-- INPUT -->
 <div class="px-4 pb-6">
+
 <div class="bg-gray-100 rounded-3xl flex items-center px-3 py-2">
 
 <input
@@ -85,10 +119,13 @@ class="flex-1 px-3 outline-none bg-transparent text-sm"
 
 <button @click="send"
 class="w-10 h-10 rounded-full bg-black text-white flex items-center justify-center">
+
 <i data-lucide="send" class="w-5 h-5"></i>
+
 </button>
 
 </div>
+
 </div>
 
 </div>
@@ -98,74 +135,194 @@ const { createApp, nextTick } = Vue;
 
 createApp({
 
-data() {
-return {
-input: "",
-messages: [],
-notes: JSON.parse(localStorage.getItem("notes") || "[]"),
-activeNote: null,
-state: "idle"
+data(){
+return{
+input:"",
+chat:[],
+notes: JSON.parse(localStorage.getItem("notes")||"[]"),
+activeNote:null,
+state:"idle",
+greeted:false
 }
 },
 
-methods: {
+methods:{
 
-time() {
+time(){
 return new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
 },
 
-saveNotes() {
+today(){
+return new Date().toLocaleDateString();
+},
+
+saveNotes(){
 localStorage.setItem("notes", JSON.stringify(this.notes));
 },
 
-bot(text) {
-this.messages.push({id:Date.now()+Math.random(), text, type:"bot", time:this.time()});
+addBot(text,delay=400){
+
+setTimeout(()=>{
+this.chat.push({
+id:Date.now()+Math.random(),
+text,
+type:"in",
+time:this.time()
+});
+
+this.scroll();
+
+},delay);
 },
 
-user(text) {
-this.messages.push({id:Date.now(), text, type:"user", time:this.time()});
+addUser(text){
+this.chat.push({
+id:Date.now(),
+text,
+type:"out",
+time:this.time()
+});
 },
 
-send() {
-const text = this.input.trim();
+scroll(){
+nextTick(()=>{
+if(this.$refs.chatBox){
+this.$refs.chatBox.scrollTo({
+top:this.$refs.chatBox.scrollHeight,
+behavior:"smooth"
+});
+}
+lucide.createIcons();
+});
+},
+
+detectList(text){
+return /^\d+\.\s/.test(text);
+},
+
+createNote(title,status="public"){
+
+const now=Date.now();
+
+const note={
+id:now,
+title,
+content:[],
+created:now,
+date:this.today(),
+time:this.time(),
+status,
+features:0
+};
+
+this.activeNote=note;
+this.notes.push(note);
+this.saveNotes();
+},
+
+toggleBookmark(){
+
+if(!this.activeNote) return;
+
+this.activeNote.features = this.activeNote.features ? 0 : 1;
+
+const i=this.notes.findIndex(n=>n.id===this.activeNote.id);
+if(i!==-1) this.notes[i]=this.activeNote;
+
+this.saveNotes();
+
+this.addBot(
+this.activeNote.features
+? "Pinned to favorites ⭐"
+: "Removed from favorites"
+);
+
+},
+
+autoSave(){
+
+if(!this.activeNote) return;
+
+const i=this.notes.findIndex(n=>n.id===this.activeNote.id);
+if(i!==-1) this.notes[i]=this.activeNote;
+
+this.saveNotes();
+
+},
+
+writingReply(){
+
+const replies=[
+"Got it. Keep going 👍",
+"Saved. What else?",
+"I'm listening…",
+"Nice. Continue writing ✍️",
+"Added to your note ✔"
+];
+
+return replies[Math.floor(Math.random()*replies.length)];
+},
+
+send(){
+
+const text=this.input.trim();
 if(!text) return;
 
-this.user(text);
-this.input = "";
+this.input="";
+this.addUser(text);
 
-const lower = text.toLowerCase();
+if(!this.greeted){
+this.greeted=true;
+this.addBot("Hi, I'm LU_LU! Create new note OR type Continue with note title");
+return;
+}
 
-if(this.state==="idle"){
+const lower=text.toLowerCase();
+
+if(lower==="save"){
+this.autoSave();
+this.addBot("Saved ✔");
+}
+
+else if(lower==="end note"){
+this.state="idle";
+this.activeNote=null;
+this.addBot("Note closed.");
+}
+
+else if(this.state==="idle"){
 
 if(lower.includes("create")){
 this.state="title";
-this.bot("Send title for new note.");
-
+this.addBot("Title please");
 }
-
 else if(lower.includes("continue")){
 this.state="continue";
-this.bot("Send exact note title.");
-
+this.addBot("Send note title");
 }
-
 else{
-this.bot("Type Create or Continue.");
+this.addBot("Type Create or Continue");
 }
 
 }
 
 else if(this.state==="title"){
-
-this.activeNote={
-id:Date.now(),
-title:text,
-content:[],
-created:new Date().toLocaleString()
-};
-
+this.createNote(text);
 this.state="writing";
-this.bot("Start writing.");
+this.addBot("Start writing your note");
+}
+
+else if(this.state==="writing"){
+
+if(this.detectList(text)){
+this.activeNote.content.push("• "+text.replace(/^\d+\.\s/,""));
+}
+else{
+this.activeNote.content.push(text);
+}
+
+this.autoSave();
+this.addBot(this.writingReply());
 
 }
 
@@ -176,77 +333,17 @@ const found=this.notes.find(n=>n.title===text);
 if(found){
 this.activeNote=found;
 this.state="writing";
-this.bot("Continuing note.");
+this.addBot("Continue writing");
 }
 else{
-this.bot("Note not found.");
+this.addBot("Note not found");
 this.state="idle";
 }
-
-}
-
-else if(this.state==="writing"){
-
-if(lower==="save"){
-this.finishNote();
-return;
-}
-
-if(lower==="delete note"){
-this.deleteNote();
-return;
-}
-
-this.activeNote.content.push(text);
-
-const replies=[
-"Saved.",
-"Added.",
-"Got it.",
-"Continue.",
-"Writing stored."
-];
-
-this.bot(replies[Math.floor(Math.random()*replies.length)]);
 
 }
 
 this.scroll();
 
-},
-
-finishNote(){
-
-if(!this.activeNote) return;
-
-const exists=this.notes.find(n=>n.id===this.activeNote.id);
-
-if(!exists) this.notes.push(this.activeNote);
-
-this.saveNotes();
-this.bot("Note saved. Returning home.");
-setTimeout(()=>window.location.href="index.html",800);
-
-},
-
-deleteNote(){
-
-if(!this.activeNote) return;
-
-this.notes=this.notes.filter(n=>n.id!==this.activeNote.id);
-this.saveNotes();
-
-this.bot("Note deleted.");
-this.activeNote=null;
-this.state="idle";
-
-},
-
-scroll(){
-nextTick(()=>{
-this.$refs.chatBox?.scrollTo(0,this.$refs.chatBox.scrollHeight);
-lucide.createIcons();
-});
 }
 
 },
